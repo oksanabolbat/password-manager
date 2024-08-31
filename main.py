@@ -2,6 +2,7 @@ import tkinter as tk
 import pyperclip
 from tkinter import messagebox
 from random import choice, randint, shuffle
+import json
 
 LABEL_FONT = ("Courier", 12, "bold")
 
@@ -29,12 +30,24 @@ def generate_password():
 
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
-with open("data.txt") as data_file:
-    data_info = data_file.read()
-data_list = [data_row.split(' | ') for data_row in data_info.split('\n')[0:len(data_info.split('\n')) - 1]]
-
-last_email = data_list[-1][1] if len(data_list) > 0 else ""
-data_file.close()
+# with open("data.txt") as data_file:
+#     data_info = data_file.read()
+# data_list = [data_row.split(' | ') for data_row in data_info.split('\n')[0:len(data_info.split('\n')) - 1]]
+#
+# last_email = data_list[-1][1] if len(data_list) > 0 else ""
+# data_file.close()
+last_email = ""
+current_data = {}
+sites_list = []
+try:
+    with open("data.json", "r") as data_file:
+        current_data = json.load(data_file)
+        sites_list = list(current_data)
+        if len(sites_list) > 0:
+            last_email = current_data.get(sites_list[-1])["email"]
+        print(last_email)
+except FileNotFoundError:
+    pass
 
 
 def add_data_handler():
@@ -49,8 +62,12 @@ def add_data_handler():
                                        message=f"You've entered the following data:\nWebsite: {website_name}\n"
                                                f"Email: {username}\nPassword: {password}\nDo you want to proceed?")
     if is_confirmed:
-        with open("data.txt", "a") as data_f:
-            data_f.write(f"{website_name} | {username} | {password}\n")
+        with open("data.json", "w") as data_f:
+            global current_data
+            new_data = {website_name: {"email": username, "password": password}}
+            current_data.update(new_data)
+            json.dump(current_data, data_f, indent=4)
+
         pyperclip.copy(password)
         entry_website.delete(0, tk.END)
         entry_password.delete(0, tk.END)
